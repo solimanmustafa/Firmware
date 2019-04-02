@@ -37,8 +37,10 @@ export DEBIAN_FRONTEND=noninteractive
 sudo apt-get update -yy --quiet
 sudo apt-get -yy --quiet --no-install-recommends install \
 	astyle \
-	bzip2 \
+	build-essential \
 	ccache \
+	clang \
+	clang-tidy \
 	cmake \
 	cppcheck \
 	doxygen \
@@ -50,33 +52,62 @@ sudo apt-get -yy --quiet --no-install-recommends install \
 	lcov \
 	make \
 	ninja-build \
-	python-pip \
-	python-pygments \
-	python-setuptools \
+	python3-pip \
+	python3-pygments \
+	python3-setuptools \
 	rsync \
 	shellcheck \
 	unzip \
 	wget \
 	xsltproc \
-	zip
+	zip \
+	;
 
 # python dependencies
-if [ -f /.dockerenv ]; then
-	# in docker install requirements system wide
-	sudo python -m pip install --upgrade pip setuptools wheel
-	sudo python -m pip install -r ${DIR}/requirements.txt
-else
-	# otherwise only install for the user
-	python -m pip install --user --upgrade pip setuptools wheel
-	python -m pip install --user -r ${DIR}/requirements.txt
-fi
+sudo python3 -m pip install --upgrade pip setuptools wheel
+sudo python3 -m pip install -r ${DIR}/requirements.txt
+
 
 # java (jmavsim or fastrtps)
-# TODO: only install when necessary
 sudo apt-get -y --quiet --no-install-recommends install \
+	ant \
 	default-jre-headless \
 	default-jdk-headless
 
-# TODO: nuttx, raspberrypi, armhf generic
 
-# TODO: gazebo or ROS optional
+# NuttX toolchain (arm-none-eabi-gcc)
+sudo apt-get -yy --quiet --no-install-recommends install \
+	autoconf \
+	automake \
+	bison \
+	bzip2 \
+	flex \
+	gdb-multiarch \
+	gperf \
+	libncurses-dev \
+	libtool \
+	pkg-config \
+	vim-common \
+	;
+
+NUTTX_GCC_VERSION=gcc-arm-none-eabi-7-2017-q4-major
+wget -O /tmp/${NUTTX_GCC_VERSION}-linux.tar.bz2 https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu-rm/7-2017q4/${NUTTX_GCC_VERSION}-linux.tar.bz2 && \
+sudo tar -jxf /tmp/${NUTTX_GCC_VERSION}-linux.tar.bz2 -C /opt/
+
+exportline="export PATH=/opt/${NUTTX_GCC_VERSION}/bin:\$PATH"
+
+if grep -Fxq "$exportline" $HOME/.profile;
+then
+	echo "${NUTTX_GCC_VERSION} path already set.";
+else
+	echo $exportline >> $HOME/.profile;
+fi
+
+# remove user from dialout group
+sudo usermod -a -G dialout $USER
+
+
+# Gazebo
+sudo sh -c 'echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable `lsb_release -cs` main" > /etc/apt/sources.list.d/gazebo-stable.list'
+sudo apt-get update -yy --quiet
+sudo apt-get -yy --quiet --no-install-recommends install gazebo9
