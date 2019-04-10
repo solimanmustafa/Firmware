@@ -12,6 +12,7 @@ pipeline {
             armhf: "px4io/px4-dev-armhf:2019-03-08",
             base: "px4io/px4-dev-base-bionic:2019-03-08",
             nuttx: "px4io/px4-dev-nuttx:2019-03-08",
+            nuttx_clang: "px4io/px4-dev-nuttx-clang:2019-03-08",
             ros: "px4io/px4-dev-ros-kinetic:2019-03-08",
             rpi: "px4io/px4-dev-raspi:2019-03-08",
             snapdragon: "lorenzmeier/px4-dev-snapdragon:2018-09-12"
@@ -42,6 +43,13 @@ pipeline {
             archive: true
           ]
 
+          def nuttx_builds_clang = [
+            target: [
+                     "px4_fmu-v2_default", "px4_fmu-v5_default"],
+            image: docker_images.nuttx_clang,
+            archive: false
+          ]
+
           def nuttx_builds_other = [
             target: ["px4_cannode-v1_default", "px4_esc-v1_default", "thiemar_s2740vc-v1_default"],
             image: docker_images.nuttx,
@@ -61,7 +69,7 @@ pipeline {
           ]
 
           def docker_builds = [
-            armhf_builds, base_builds, nuttx_builds_archive, nuttx_builds_other, rpi_builds, snapdragon_builds
+            armhf_builds, base_builds, nuttx_builds_archive, nuttx_builds_clang, nuttx_builds_other, rpi_builds, snapdragon_builds
           ]
 
           for (def build_type = 0; build_type < docker_builds.size(); build_type++) {
